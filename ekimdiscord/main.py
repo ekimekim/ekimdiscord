@@ -5,6 +5,7 @@ import logging
 import aiogevent
 import discord
 import gevent.pool
+from discord.enums import MessageType
 
 import escapes
 import lineedit
@@ -18,11 +19,16 @@ def format_message(msg):
 		origin = "{}/{}".format(msg.server.name, msg.channel.name)
 	else:
 		origin = "<private>"
-	return "{color}{origin} {msg.author.name}: {msg.content}{reset}".format(
+	return "{color}{origin} {msg.author.name}{attachments}: {content}{reset}".format(
 		msg=msg,
 		origin=origin,
 		color=escapes.FORECOLOUR(escapes.random_colour_256(origin)),
 		reset=escapes.UNFORMAT,
+		content=(msg.clean_content if msg.type == MessageType.default else msg.system_content),
+		attachments=(
+			"({} attachments)".format(len(msg.attachments))
+			if msg.attachments else ""
+		),
 	)
 
 
