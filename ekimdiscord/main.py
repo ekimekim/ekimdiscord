@@ -32,10 +32,11 @@ def format_message(msg):
 	)
 
 
-def main(token, log='INFO'):
+def main(token, log='WARNING', config='~/.ekimdiscord.json'):
 	logging.getLogger().setLevel(log)
 
 	group = gevent.pool.Group()
+	config = Config(os.path.expanduser(config))
 
 	# set up asyncio event loop
 	asyncio.set_event_loop_policy(aiogevent.EventLoopPolicy())
