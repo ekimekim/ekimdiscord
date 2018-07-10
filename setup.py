@@ -8,5 +8,9 @@ setup(
 	description='terminal client for discord with multiplexing',
 	packages=find_packages(),
 	install_requires=[
+		'aiogevent', # https://github.com/2mf/aiogevent
+		'argh',
+		'discord.py',
+		'gevent',
 	],
 )
