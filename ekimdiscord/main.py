@@ -23,7 +23,9 @@ class EkimDiscord(object):
 	def __init__(self, configpath, token):
 		self.group = gevent.pool.Group()
 		self.config = Config(configpath)
-		self.token = token
+		self.token = token or self.config.get('token')
+		if not self.token:
+			raise ValueError("token must either be specified in config file or on command line")
 		self.editor = lineedit.LineEditing(
 			input_fn=lineedit.gevent_read_fn, gevent_handle_sigint=True,
 			completion=self.complete, complete_whole_line=True,
@@ -112,7 +114,7 @@ class EkimDiscord(object):
 			aiogevent.yield_future(self.client.close())
 
 
-def main(token, log='WARNING', config='~/.ekimdiscord.json'):
+def main(token=None, log='WARNING', config='~/.ekimdiscord.json'):
 	logging.getLogger().setLevel(log)
 	config = os.path.expanduser(config)
 
