@@ -1,6 +1,7 @@
 
 import asyncio
 import logging
+import random
 import os
 
 import aiogevent
@@ -28,6 +29,8 @@ class EkimDiscord(object):
 			completion=self.complete, complete_whole_line=True,
 		)
 		self.client = discord.Client()
+		# randomise color allocations on each startup
+		self.color_seed = random.random()
 
 		@self.client.event
 		async def on_message(message):
@@ -60,7 +63,7 @@ class EkimDiscord(object):
 		return "{color}{origin} {msg.author.name}{attachments}: {content}{reset}".format(
 			msg=msg,
 			origin=origin,
-			color=escapes.FORECOLOUR(escapes.random_colour_256(origin)),
+			color=escapes.FORECOLOUR(escapes.random_colour_256((self.color_seed, origin))),
 			reset=escapes.UNFORMAT,
 			content=(msg.clean_content if msg.type == MessageType.default else msg.system_content),
 			attachments=(
