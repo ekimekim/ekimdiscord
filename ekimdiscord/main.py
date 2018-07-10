@@ -12,6 +12,7 @@ import escapes
 import lineedit
 
 from .config import Config
+from .commands import Command
 
 LOG_FORMAT = "[%(asctime)s] %(levelname)s %(name)s: %(message)s"
 
@@ -23,7 +24,8 @@ class EkimDiscord(object):
 		self.config = Config(configpath)
 		self.token = token
 		self.editor = lineedit.LineEditing(
-			input_fn=lineedit.gevent_read_fn, gevent_handle_sigint=True
+			input_fn=lineedit.gevent_read_fn, gevent_handle_sigint=True,
+			completion=self.complete, complete_whole_line=True,
 		)
 		self.client = discord.Client()
 
@@ -41,8 +43,13 @@ class EkimDiscord(object):
 			asyncio.get_event_loop().run_until_complete(self.client.start(self.token, bot=False))
 
 
-	def on_message(self, message):
-		self.editor.write(self.format_message(message))
+	def on_message(self, msg):
+		if (
+			msg.server and
+			[msg.server.name.lower(), msg.channel.name.lower()] in self.config.get('ignore', [])
+		):
+			return
+		self.editor.write(self.format_message(msg))
 
 
 	def format_message(self, msg):
@@ -63,6 +70,20 @@ class EkimDiscord(object):
 		)
 
 
+	def complete(self, text):
+		commands = Command.get_commands()
+		if ' ' not in text:
+			# auto-complete to a command
+			return '', [command for command in commands if command.startswith(text)]
+		# pass to command to determine completions, if any
+		command, text = text.split(' ', 1)
+		if command in commands:
+			prefix, completions = commands[command](self)._complete(text)
+			prefix = '{} {}'.format(command, prefix)
+			return prefix, completions
+		return '', []
+
+
 	def input_loop(self):
 		try:
 			while True:
@@ -70,9 +91,19 @@ class EkimDiscord(object):
 				logging.info("read input: {!r}".format(line))
 				if not line:
 					continue
-				# TODO handle commands
+				if ' ' in line:
+					command, text = line.split(' ', 1)
+				else:
+					command, text = line, ''
+				commands = Command.get_commands()
+				if command not in commands:
+					self.editor.write("Unknown command: {!r}".format(command))
+					continue
+				commands[command](self)._run(text)
 		except EOFError:
 			logging.info("Got EOF")
+		except Exception:
+			logging.critical("Fatal error in input loop", exc_info=True)
 		finally:
 			logging.info("Closing connection")
 			aiogevent.yield_future(self.client.close())

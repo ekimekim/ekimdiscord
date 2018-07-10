@@ -1,5 +1,6 @@
 
 import json
+import os
 
 
 class Config(dict):
@@ -38,8 +39,8 @@ class Config(dict):
 		# write-then-rename for atomic overwrite
 		temppath = '{}.tmp'.format(self.filepath)
 		with open(temppath, 'w') as f:
-			json.dump(self, f)
-		os.rename(tempfile, self.filepath)
+			json.dump(self, f, indent=4)
+		os.rename(temppath, self.filepath)
 
 	def __enter__(self):
 		return self
