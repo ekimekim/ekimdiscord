@@ -24,8 +24,13 @@ class Config(dict):
 		self.load()
 
 	def load(self):
-		with open(self.filepath) as f:
-			data = json.load(f)
+		try:
+			with open(self.filepath) as f:
+				data = json.load(f)
+		except FileNotFoundError:
+			data = {}
+		if not isinstance(data, dict):
+			raise ValueError("Config file does not contain top-level object")
 		self.clear()
 		self.update(data)
 
