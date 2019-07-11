@@ -50,8 +50,10 @@ class EkimDiscord(object):
 
 	def on_message(self, msg):
 		if (
-			msg.server and
-			[msg.server.name.lower(), msg.channel.name.lower()] in self.config.get('ignore', [])
+			msg.server and (
+				[msg.server.name.lower(), msg.channel.name.lower()] in self.config.get('ignore', [])
+				or [msg.server.name.lower(), None] in self.config.get('ignore', [])
+			)
 		):
 			return
 		self.editor.write(self.format_message(msg))

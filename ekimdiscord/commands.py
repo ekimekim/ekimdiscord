@@ -128,3 +128,22 @@ class Ignore(ChannelCommand):
 			if (server, channel) not in ignore_list:
 				ignore_list.append([server, channel])
 		self.write("Ignored channel {}/{}".format(server, channel))
+
+
+class IgnoreServer(Command):
+	"""Ignore all channels of a server"""
+	def parse(self, text):
+		servers = as_dict(self.parent.client.servers)
+		return {"server": text.strip()}, '', filter_prefix(text.lower(), servers)
+
+	def run(self, server):
+		servers = as_dict(self.parent.client.servers)
+		if server not in servers:
+			self.write("No such server: {!r}".format(server))
+			return
+		with self.parent.config as config:
+			ignore_list = config.setdefault('ignore', [])
+			if (server, None) not in ignore_list:
+				ignore_list.append([server, None])
+		self.write("Ignored server {}".format(server))
+
