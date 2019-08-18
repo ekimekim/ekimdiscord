@@ -4,6 +4,7 @@ import logging
 import random
 import os
 
+import argh
 import aiogevent
 import discord
 import gevent.pool
@@ -20,10 +21,11 @@ LOG_FORMAT = "[%(asctime)s] %(levelname)s %(name)s: %(message)s"
 
 class EkimDiscord(object):
 
-	def __init__(self, configpath, token):
+	def __init__(self, configpath, token, server_whitelist=None):
 		self.group = gevent.pool.Group()
 		self.config = Config(configpath)
 		self.token = token or self.config.get('token')
+		self.server_whitelist = server_whitelist
 		if not self.token:
 			raise ValueError("token must either be specified in config file or on command line")
 		self.editor = lineedit.LineEditing(
@@ -53,6 +55,7 @@ class EkimDiscord(object):
 			msg.server and (
 				[msg.server.name.lower(), msg.channel.name.lower()] in self.config.get('ignore', [])
 				or [msg.server.name.lower(), None] in self.config.get('ignore', [])
+				or (self.server_whitelist and msg.server.name.lower() not in self.server_whitelist)
 			)
 		):
 			return
@@ -116,11 +119,12 @@ class EkimDiscord(object):
 			aiogevent.yield_future(self.client.close())
 
 
-def main(token=None, log='WARNING', config='~/.ekimdiscord.json'):
+@argh.arg('--server-whitelist', action='append', type=lambda s: s.lower())
+def main(token=None, log='WARNING', config='~/.ekimdiscord.json', server_whitelist=[]):
 	logging.getLogger().setLevel(log)
 	config = os.path.expanduser(config)
 
 	# set up asyncio event loop
 	asyncio.set_event_loop_policy(aiogevent.EventLoopPolicy())
 
-	EkimDiscord(config, token).run()
+	EkimDiscord(config, token, server_whitelist).run()
