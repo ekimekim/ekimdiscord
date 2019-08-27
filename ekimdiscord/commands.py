@@ -124,10 +124,34 @@ class Ignore(ChannelCommand):
 			self.write("No such channel: {!r}".format(channel))
 			return
 		with self.parent.config as config:
-			ignore_list = config.setdefault('ignore', [])
-			if (server, channel) not in ignore_list:
-				ignore_list.append([server, channel])
+			(
+				config.setdefault('servers', {})
+				.setdefault(server, {}).
+				setdefault('channels', {}).
+				setdefault(channel, {})
+			)['ignore'] = True
 		self.write("Ignored channel {}/{}".format(server, channel))
+
+
+class Allow(ChannelCommand):
+	"""Un-ignore a channel, even if the entire server was previously ignored"""
+	def run(self, server, channel, extra=None):
+		servers = as_dict(self.parent.client.servers)
+		if server not in servers:
+			self.write("No such server: {!r}".format(server))
+			return
+		channels = as_dict(servers[server].channels)
+		if channel not in channels:
+			self.write("No such channel: {!r}".format(channel))
+			return
+		with self.parent.config as config:
+			(
+				config.setdefault('servers', {})
+				.setdefault(server, {}).
+				setdefault('channels', {}).
+				setdefault(channel, {})
+			)['ignore'] = False
+		self.write("Allowed channel {}/{}".format(server, channel))
 
 
 class IgnoreServer(Command):
@@ -142,8 +166,6 @@ class IgnoreServer(Command):
 			self.write("No such server: {!r}".format(server))
 			return
 		with self.parent.config as config:
-			ignore_list = config.setdefault('ignore', [])
-			if (server, None) not in ignore_list:
-				ignore_list.append([server, None])
+			config.setdefault('servers', {}).setdefault(server, {})['ignore'] = True
 		self.write("Ignored server {}".format(server))
 

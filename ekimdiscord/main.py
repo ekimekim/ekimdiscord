@@ -50,14 +50,20 @@ class EkimDiscord(object):
 			asyncio.get_event_loop().run_until_complete(self.client.start(self.token, bot=False))
 
 
+	def should_ignore(self, msg):
+		# Don't ignore private msgs
+		if not msg.server:
+			return False
+		# If server whitelist set, ignore everything else
+		if self.server_whitelist:
+			return msg.server.name.lower() not in self.server_whitelist
+		server_config = self.config.get('servers', {}).get(msg.server.name.lower(), {})
+		channel_config = dict(server_config, **server_config.get('channels', {}).get(msg.channel.name.lower(), {}))
+		return channel_config.get('ignore', False)
+
+
 	def on_message(self, msg):
-		if (
-			msg.server and (
-				[msg.server.name.lower(), msg.channel.name.lower()] in self.config.get('ignore', [])
-				or [msg.server.name.lower(), None] in self.config.get('ignore', [])
-				or (self.server_whitelist and msg.server.name.lower() not in self.server_whitelist)
-			)
-		):
+		if self.should_ignore(msg):
 			return
 		self.editor.write(self.format_message(msg))
 
