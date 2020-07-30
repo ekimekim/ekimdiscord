@@ -91,7 +91,7 @@ class ChannelCommand(Command):
 	abstract = True
 
 	def parse(self, text):
-		servers = as_dict(self.parent.client.servers)
+		servers = as_dict(self.parent.client.guilds)
 		if '/' not in text:
 			# we're still typing server name
 			return "no channel given", '', filter_prefix(text.lower(), servers)
@@ -115,7 +115,7 @@ class ChannelCommand(Command):
 class Ignore(ChannelCommand):
 	"""Ignore a channel, suppressing further messages (unless they mention me) from being displayed."""
 	def run(self, server, channel, extra=None):
-		servers = as_dict(self.parent.client.servers)
+		servers = as_dict(self.parent.client.guilds)
 		if server not in servers:
 			self.write("No such server: {!r}".format(server))
 			return
@@ -136,7 +136,7 @@ class Ignore(ChannelCommand):
 class Allow(ChannelCommand):
 	"""Un-ignore a channel, even if the entire server was previously ignored"""
 	def run(self, server, channel, extra=None):
-		servers = as_dict(self.parent.client.servers)
+		servers = as_dict(self.parent.client.guilds)
 		if server not in servers:
 			self.write("No such server: {!r}".format(server))
 			return
@@ -157,11 +157,11 @@ class Allow(ChannelCommand):
 class IgnoreServer(Command):
 	"""Ignore all channels of a server"""
 	def parse(self, text):
-		servers = as_dict(self.parent.client.servers)
+		servers = as_dict(self.parent.client.guilds)
 		return {"server": text.strip()}, '', filter_prefix(text.lower(), servers)
 
 	def run(self, server):
-		servers = as_dict(self.parent.client.servers)
+		servers = as_dict(self.parent.client.guilds)
 		if server not in servers:
 			self.write("No such server: {!r}".format(server))
 			return

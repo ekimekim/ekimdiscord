@@ -53,12 +53,12 @@ class EkimDiscord(object):
 
 	def should_ignore(self, msg):
 		# Don't ignore private msgs
-		if not msg.server:
+		if not msg.guild:
 			return False
 		# If server whitelist set, ignore everything else
 		if self.server_whitelist:
-			return msg.server.name.lower() not in self.server_whitelist
-		server_config = self.config.get('servers', {}).get(msg.server.name.lower(), {})
+			return msg.guild.name.lower() not in self.server_whitelist
+		server_config = self.config.get('servers', {}).get(msg.guild.name.lower(), {})
 		channel_config = dict(server_config, **server_config.get('channels', {}).get(msg.channel.name.lower(), {}))
 		return channel_config.get('ignore', False)
 
@@ -70,8 +70,8 @@ class EkimDiscord(object):
 
 
 	def format_message(self, msg):
-		if msg.server:
-			origin = "{}/{}".format(msg.server.name, msg.channel.name)
+		if msg.guild:
+			origin = "{}/{}".format(msg.guild.name, msg.channel.name)
 		else:
 			origin = "<private>"
 		return "{color}{origin} {msg.author.name}{attachments}: {content}{reset}".format(
