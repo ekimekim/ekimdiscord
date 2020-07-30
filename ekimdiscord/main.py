@@ -3,6 +3,7 @@ import asyncio
 import logging
 import random
 import os
+import time
 
 import argh
 import aiogevent
@@ -133,4 +134,10 @@ def main(token=None, log='WARNING', config='~/.ekimdiscord.json', server_whiteli
 	# set up asyncio event loop
 	asyncio.set_event_loop_policy(aiogevent.EventLoopPolicy())
 
-	EkimDiscord(config, token, server_whitelist).run()
+	# it crashes occasionally, just keep restarting
+	while True:
+		try:
+			EkimDiscord(config, token, server_whitelist).run()
+		except Exception:
+			logging.exception("Main loop failed, reconnecting")
+		time.sleep(1)
